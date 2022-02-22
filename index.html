@@ -5,6 +5,8 @@
     <title>Home</title>
   </head>
   <body>
-    <h1>{{"Hello World!" | downcase}}</h1>
+    <a id="a-title" href="{{ '/' | relative_url }}">
+          <h1>{{ site.title | default: site.github.repository_name }}</h1>
+        </a>
   </body>
 </html>
