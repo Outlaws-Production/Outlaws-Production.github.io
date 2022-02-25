@@ -6,3 +6,4 @@ title: Outlaws
 show_downloads: false
 google_analytics: G-R1SVEKLJ6R
 logo: outlaws-logo.png
+include: [".well-known"]
