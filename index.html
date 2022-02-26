@@ -9,7 +9,24 @@ title: Home
     <meta charset="utf-8">
     <title>Home</title>
   </head>
+  <style>
+    @keyframes cursor-blink {
+  0% {
+    opacity: 0;
+  }
+}
+
+ p::after {
+  content: "";
+  width: 5px;
+  height: 20px;
+  background: #ffffff;
+  display: inline-block;
+  animation: cursor-blink 1s steps(2) infinite;
+}
+
+  </style>
   <body>
-    <p>|</p>
+    <p></p>
   </body>
 </html>
